@@ -1,0 +1,48 @@
+				SORT AREA CONTATTION
+=============================================================================================
+SELECT a.sid, 
+       b.name, 
+       a.value 
+FROM v$sesstat a, v$statname b 
+WHERE a.statistic# = b.statistic# 
+AND b.name = 'sorts (memory)';
+======================================================================
+SELECT name, value
+FROM v$sysstat
+WHERE name IN ('sorts (memory)', 'sorts (disk)');
+============================================================
+ SELECT
+       (SELECT VALUE FROM v$sysstat WHERE name = 'sorts (memory)') AS memory_sorts,
+       (SELECT VALUE FROM v$sysstat WHERE name = 'sorts (disk)') AS disk_sorts
+    FROM dual;
+============================================================================
+			SORT AREA HIT RATIO
+============================================================================
+
+SELECT
+    mem.value  AS sorts_in_memory,
+    disk.value AS sorts_on_disk,
+    ROUND( (mem.value / (mem.value + disk.value)) * 100, 2 ) AS sort_hit_ratio_percent
+FROM
+    v$sysstat mem,
+    v$sysstat disk
+WHERE
+    mem.name  = 'sorts (memory)'
+    AND disk.name = 'sorts (disk)';
+
+
+
+============================================================
+ SELECT
+       ROUND(
+           (MEM_SORTS.VALUE /
+           (MEM_SORTS.VALUE + DISK_SORTS.VALUE)) * 100,
+           2
+      ) AS sort_hit_ratio_percent
+    FROM
+        (SELECT VALUE FROM v$sysstat WHERE name = 'sorts (memory)') MEM_SORTS,
+        (SELECT VALUE FROM v$sysstat WHERE name = 'sorts (disk)') DISK_SORTS;
+================================================================================
+
+
+ALTER SYSTEM SET SORT_AREA_SIZE = 10M;

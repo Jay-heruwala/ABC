@@ -1,0 +1,73 @@
+6. Find Query Execution Plan
+
+
+===================================================
+select * from Table(DBMS_Xplan.Display);
+===================================================
+
+
+
+CREATE TABLE author (
+    BOOK_ID NUMBER,
+    AUTHOR_ID NUMBER,
+    TITLE VARCHAR2(100),
+    PRICE NUMBER(10,2)
+) storage (initial 5k next 5k minextents 1 maxextents 5);
+====================================================================
+
+
+Query:
+-------------------------------------------------
+EXPLAIN PLAN
+  SET STATEMENT_ID = '101' FOR
+  SELECT * FROM author;
+
+====================================================================
+SET LINESIZE 150
+SET PAGESIZE 200
+
+COLUMN id FORMAT 999 HEADING "Id"
+COLUMN operation FORMAT A25 HEADING "Operation"
+COLUMN name FORMAT A15 HEADING "Name"
+COLUMN rows FORMAT 9999 HEADING "Rows"
+COLUMN bytes FORMAT 9999 HEADING "Bytes"
+COLUMN "Cost (%CPU)" FORMAT A10
+COLUMN time FORMAT A10 HEADING "Time"
+
+SELECT
+    id,
+    LPAD(' ', 2 * depth) || operation AS operation,
+    NVL(object_name, ' ') AS name,
+    NVL(cardinality, 0) AS "Rows",
+    NVL(bytes, 0) AS bytes,
+    cost || ' (0)' AS "Cost %CPU",
+    '00:00:01' AS "Time"
+FROM
+    plan_table;
+====================================================================
+WHERE
+    statement_id = '101'
+ORDER BY
+    id;
+-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=--=--=-=-=-=-=--=-=-=-
+
+SELECT * 
+FROM table(DBMS_XPLAN.DISPLAY(NULL, '101'));
+
+
+==============================================================================
+select ID,OPERATION,OBJECT_NAME,CARDINALITY,COST,CPU_COST,IO_COST from plan_table;
+
+==============================================================================
+explain plan for select * from author where AUTHOR_ID=1;
+
+COLUMN object_name FORMAT A25;
+COLUMN object_owner FORMAT A15;
+select object_name,object_owner,operation,id,depth from plan_table;
+------------------------------------------------
+
+
+explain plan for 
+select * from author where AUTHOR_ID=1;
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+

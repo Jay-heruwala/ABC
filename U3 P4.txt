@@ -1,0 +1,109 @@
+select name,gets,misses,sleeps,spin_gets from v$latch where name like '%chain%';
+
+================================================================================================================
+
+DATA BUFFER CACHE HIT RATIO
+====================================================================================
+(PER SESSION)
+		[QUERY NO-1]
+--------------------------------------------------
+SELECT 
+    ROUND(
+        ((cur.value + con.value) / NULLIF((cur.value + con.value) - phy.value, 0)) * 100, 
+        2
+    ) AS "Buffer Cache Hit Ratio (%)"
+FROM 
+    v$sysstat cur,
+    v$sysstat con,
+    v$sysstat phy
+WHERE 
+    cur.name = 'db block gets'
+    AND con.name = 'consistent gets'
+    AND phy.name = 'physical reads';
+=====================================================
+		[QUERY NO-2]
+======================================================
+SELECT 
+    ROUND(
+        (1 - (phy.value / (cur.value + con.value))) * 100, 
+        2
+    ) AS "Buffer Cache Hit Ratio (%)"
+FROM 
+    v$sysstat cur,
+    v$sysstat con,
+    v$sysstat phy
+WHERE 
+    cur.name = 'db block gets'
+    AND con.name = 'consistent gets'
+    AND phy.name = 'physical reads';
+
+--------------------------------------------------
+(per BUFFER POOL)
+---------------------------------------------
+SELECT 
+    name AS buffer_pool,
+    db_block_gets,
+    consistent_gets,
+    physical_reads,
+    ROUND(
+            ((db_block_gets + consistent_gets - physical_reads) /
+            (db_block_gets + consistent_gets)) * 100,
+            2
+        ) AS "Buffer Cache Hit Ratio (%)"
+FROM v$buffer_pool_statistics
+ORDER BY name;
+
+
+===================================================================================
+(SYSTEM HIT RATIO)
+====================================================================================
+SELECT (1 - (phy.value / (cur.value + con.value))) * 100 AS "Buffer Cache Hit Ratio"
+FROM v$sysstat cur, v$sysstat con, v$sysstat phy
+WHERE cur.name = 'db block gets'
+AND con.name = 'consistent gets'
+AND phy.name = 'physical reads';
+
+
+OR
+
+
+ select Round( ((db1.value + db2.value - db3.value ) / (db1.value + db2.value)) * 100 , 2 ) AS "Ratio(%)" from 
+  v$sysstat db1,v$sysstat db2, v$sysstat db3 
+   where db1.name = 'db block gets' AND db2.name = 'consistent gets' and db3.name ='physical reads';
+
+
+====================================================================================
+(HOW IT WILL WORK)
+====================================================================================
+When a SQL query needs a data block:
+	Oracle first checks buffer cache (in memory).
+	If found → cache hit
+	If not found → disk read (physical read).
+-===================================================================================
+DB Block Gets = 1000
+Consistent Gets = 500
+Physical Reads = 50
+
+Buffer Cache Hit Ratio (%) = (1 - (Physical Reads) / (DB Block Gets + Consistent Gets)) * 100
+
+Buffer Cache Hit Ratio (%) = (1 - (50 / (1000 + 500))) * 100 = 96.7%
+
+========================================================================================
+CONCLUSION
+----------------------------------------------------
+Hit Ratio 90–99% → Most of the time, Oracle finds the data it needs in memory (buffer cache). This is good and fast.
+
+Hit Ratio below 90% → Oracle has to read from the disk more often, which is slower. You might need to:
+
+	-Give more memory to the buffer cache (DB_CACHE_SIZE).
+
+	-Optimize your queries or indexes so Oracle doesn’t read unnecessary data.
+======================================================================================================
+
+higher hit ratio = faster performance
+lower hit ratio = slower performance.
+=========================================================================================
+[Solution]
+Give more memory to the buffer cache (DB_CACHE_SIZE) so frequently used data stays in memory. 
+Optimize queries and use indexes to reduce unnecessary disk reads. 
+Focus on hot tables to keep their blocks in memory for faster performance

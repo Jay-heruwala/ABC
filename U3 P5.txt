@@ -1,0 +1,140 @@
+Write different queries to find out hit ratio for the shared pool area and redo log each.
+
+================================================================================================================
+					SHARED POOL HIT RATIO
+==========================================================================================================================
+
+
+
+SELECT 
+    ROUND((1 - (SUM(reloads)/SUM(pins))) * 100, 2) 
+        AS "Shared Pool Hit Ratio (%)"
+FROM 
+    v$librarycache;
+-------------------------------------------------------------------------------
+SELECT 
+    ROUND((SUM(gethits) / SUM(gets)) * 100, 2) AS "Shared Pool Get Hit Ratio (%)",
+    ROUND((SUM(pinhits) / SUM(pins)) * 100, 2) AS "Shared Pool Pin Hit Ratio (%)"
+FROM v$librarycache;
+
+-------------------------------------------------------------------------------
+SELECT 
+    ROUND((SUM(requests) - SUM(request_misses)) / SUM(requests) * 100, 2) 
+        AS "Shared Pool Hit Ratio (%)"
+FROM v$shared_pool_reserved;
+
+
+=============================================================================================================================
+                                         REDO LOG HIT RATIO
+===========================================================================================================================
+
+SELECT 
+    ROUND(
+        (1 - ( (SELECT VALUE FROM v$sysstat WHERE NAME = 'redo buffer allocation retries') /
+               (SELECT VALUE FROM v$sysstat WHERE NAME = 'redo entries')
+             )
+        ) * 100
+    , 2) 
+    AS "Redo Buffer Hit Ratio (%)"
+FROM dual;
+
+------------------------------------------------------------------------------------
+
+SELECT 
+    ROUND(
+        (SUM(value) - SUM(CASE WHEN name = 'redo buffer allocation retries' THEN value END)) 
+        / SUM(value) * 100,
+        2
+    ) AS "Redo Log Hit Ratio (%)"
+FROM v$sysstat
+WHERE name IN ('redo entries', 'redo buffer allocation retries');
+
+------------------------------------------------------------------------------------
+SELECT 
+    ROUND(
+        (COUNT(*) - SUM(CASE WHEN status='ACTIVE' THEN 1 ELSE 0 END)) 
+        / COUNT(*) * 100,
+        2
+    ) AS "Approx Redo Log Hit Ratio (%)"
+FROM v$log;
+
+-----------------------------------------------------------------------------------
+[Shows how much redo is being written and if sessions are waiting for log space.]
+
+SELECT name, value,con_id,class
+FROM v$sysstat
+WHERE name IN ('redo writes', 'redo log space requests', 'redo log space waits');
+
+
+
+
+
+
+=====================================================================================================================
+					[HOW SHARED POOL WILL WORK]
+------------------------------------------------------------------------------------------------------------------
+It checks the Library Cache (part of Shared Pool) to see if the statement or object is already in memory.
+	If found → Cache Hit (no parsing needed)
+	If not found → Miss → Oracle has to parse or load the object again (slower).
+================================================================================
+[EXAMPLE]
+
+GETS = Number of times Oracle searched (looked up) an object in the library cache.
+GETHITS = Oracle found the object in cache → good performance
+PINS = Number of times Oracle attempted to execute/use an object in the library cache.
+PINHITS = Oracle successfully reused the cached object → no hard parse needed.
+
+Gets = 2000
+Get Misses = 100
+Pins = 500
+Pin Misses = 25
+
+Get Hit Ratio (%) = (Gets - Get Misses) / Gets * 100
+Get Hit Ratio (%) = (2000 - 100) / 2000 * 100 = 95%
+
+Pin Hit Ratio (%) = (Pins - Pin Misses) / Pins * 100
+Pin Hit Ratio (%) = (500 - 25) / 500 * 100 = 95%
+==========================================================================
+[CONCLUSION]
+
+Hit Ratio 90–99% → Most of the time, Oracle finds objects in memory 
+	→ Fast execution.
+Hit Ratio below 90% → Oracle often reparses or reloads objects 
+	→ Slower execution.
+==========================================================================
+[HOW TO RESOLVE THIS PROBLEM]
+
+Increase SHARED_POOL_SIZE.
+Reduce unnecessary PL/SQL or SQL compilations.
+
+
+
+
+
+=====================================================================================================================
+					HOW REDO LOG  WILL WORK
+=====================================================================================================================
+When Oracle makes changes (INSERT, UPDATE, DELETE), it writes redo entries to the redo log buffer in memory.
+If the buffer is reused efficiently → Hit (less waiting).
+If the buffer cannot keep up → Miss / Wastage (needs to write to disk immediately, slower).
+================================================================================
+[EXAMPLE]
+Redo Entries = 10000
+Redo Wastage = 200
+
+Redo Log Hit Ratio (%) = (1 - Redo Wastage / Redo Entries) * 100
+Redo Log Hit Ratio (%) = (1 - 200 / 10000) * 100 = 98%
+=============================================================================
+[CONCLUSION]
+Hit Ratio 90–99% → Redo log buffer is sufficient
+	 → Good performance.
+Hit Ratio below 90% → Frequent waits for redo writes 
+	→ Slower transaction processing.
+==============================================================================
+[HOW TO RESOLVE]
+
+Increase LOG_BUFFER size in Oracle:
+	ALTER SYSTEM SET log_buffer = <new_size> SCOPE=BOTH;
+Avoid large single transactions that generate excessive redo at once.
+Tune application to commit efficiently, not too frequently, not too rarely.
+

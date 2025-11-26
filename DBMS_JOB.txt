@@ -1,0 +1,158 @@
+
+
+------------------------------------------------------------
+1. CREATE TABLE 
+------------------------------------------------------------
+CREATE TABLE pan_log (
+    log_id        NUMBER PRIMARY KEY,
+    pan_no        VARCHAR2(10),
+    activity      VARCHAR2(50),
+    log_time      DATE
+)
+STORAGE (initial 2k next 5k minextents 1 maxextents 5);
+
+------------------------------------------------------------
+2. CREATE SEQUENCE
+------------------------------------------------------------
+CREATE SEQUENCE pan_log_seq START WITH 1 INCREMENT BY 1;
+
+------------------------------------------------------------
+3. CREATE PROCEDURE TO INSERT PAN LOG ENTRIES
+------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE insert_pan_logs AS
+BEGIN
+    INSERT INTO pan_log VALUES (pan_log_seq.NEXTVAL, 'ABCDE1234F', 'Login Attempt', SYSDATE);
+    INSERT INTO pan_log VALUES (pan_log_seq.NEXTVAL, 'PQRSX5678L', 'Profile Update', SYSDATE);
+    INSERT INTO pan_log VALUES (pan_log_seq.NEXTVAL, 'LMNOP3456J', 'Aadhaar Link Check', SYSDATE);
+    INSERT INTO pan_log VALUES (pan_log_seq.NEXTVAL, 'XYZAB9876Q', 'PAN Verification', SYSDATE);
+    INSERT INTO pan_log VALUES (pan_log_seq.NEXTVAL, 'TYUOP5567Z', 'Document Upload', SYSDATE);
+    COMMIT;
+END;
+/
+
+------------------------------------------------------------
+4. CREATE ONE-TIME JOB (RUN ONLY ONCE)
+------------------------------------------------------------
+DECLARE
+    job_no NUMBER;
+BEGIN
+    DBMS_JOB.SUBMIT(
+        job       => job_no,
+        what      => 'BEGIN insert_pan_logs; END;',
+        next_date => SYSDATE,
+        interval  => 'NULL'
+    );
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('One-time Job created with JOB ID: ' || job_no);
+END;
+/
+
+------------------------------------------------------------
+5. CREATE DAILY JOB (RUN EVERY DAY)
+------------------------------------------------------------
+DECLARE
+    job_no NUMBER;
+BEGIN
+    DBMS_JOB.SUBMIT(
+        job       => job_no,
+        what      => 'BEGIN insert_pan_logs; END;',
+        next_date => SYSDATE,
+        interval  => 'SYSDATE + 1'
+    );
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('Daily Job created with JOB ID: ' || job_no);
+END;
+/
+
+------------------------------------------------------------
+6. CHECK DATA
+------------------------------------------------------------
+SELECT * FROM pan_log;
+
+
+SELECT job, last_date, next_date, broken
+FROM user_jobs;
+
+
+BEGIN
+   DBMS_JOB.BROKEN(job => 238, broken => FALSE);
+   COMMIT;
+END;
+/
+
+
+BEGIN
+   DBMS_JOB.REMOVE(238);
+   COMMIT;
+END;
+/
+
+
+
+
+
+
+
+
+
+
+
+================= Student ============================
+
+
+
+
+
+
+CREATE TABLE student (
+    student_id   NUMBER PRIMARY KEY,
+    name         VARCHAR2(50),
+    marks        NUMBER
+)storage (initial 2k next 5k minextents 1 maxextents 5);
+--------------------------------------------------------------------------------------------------------
+CREATE SEQUENCE student_seq START WITH 1 INCREMENT BY 1;
+------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE insert_students_job AS
+BEGIN
+    INSERT INTO student (student_id, name, marks) VALUES (student_seq.NEXTVAL, 'Ankesh', 95);
+    INSERT INTO student (student_id, name, marks) VALUES (student_seq.NEXTVAL, 'Jayesh', 90);
+    INSERT INTO student (student_id, name, marks) VALUES (student_seq.NEXTVAL, 'Parth', 78);
+    INSERT INTO student (student_id, name, marks) VALUES (student_seq.NEXTVAL, 'Ram', 92);
+    INSERT INTO student (student_id, name, marks) VALUES (student_seq.NEXTVAL, 'Krishn', 88);
+    
+    COMMIT;
+END;
+/
+--------------------------------[FOR ONLY ONE TIME]--------------------------------------------------------
+DECLARE
+    job_no NUMBER;
+BEGIN
+    DBMS_JOB.SUBMIT(
+        job       => job_no,
+        what      => 'BEGIN insert_students_job; END;',
+        next_date => SYSDATE,
+        interval  => 'NULL'  -- run only once
+    );
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Job created with JOB ID: ' || job_no);
+END;
+/
+============================[for every day]=========================================
+DECLARE
+    job_no NUMBER;
+BEGIN
+    DBMS_JOB.SUBMIT(
+        job       => job_no,
+        what      => 'BEGIN insert_students_job; END;',
+        next_date => SYSDATE,
+        interval  => 'SYSDATE + 1'  -- run every day
+    );
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Job created with JOB ID: ' || job_no);
+END;
+/
+-----------------------------------------------------------------
+select * from student;

@@ -1,0 +1,55 @@
+CREATE TABLE emp (
+    empno NUMBER,
+    ename VARCHAR2(50),
+    deptno NUMBER
+)
+storage (initial 1k next 10k minextents 1 maxextents 5)
+;
+
+INSERT INTO emp VALUES (101, 'ANKESH', 10);
+INSERT INTO emp VALUES (102, 'JAYESH', 20);
+INSERT INTO emp VALUES (103, 'PARTH', 10);
+COMMIT;
+===============================================================================
+SET SERVEROUTPUT ON;
+
+DECLARE
+    v_cursor_id   NUMBER;         -- Cursor handle
+    v_query       VARCHAR2(200);  -- Dynamic SQL query
+    v_empno       NUMBER;         -- Output variable
+    v_ename       VARCHAR2(50);   -- Output variable
+    v_status      NUMBER;         -- Execution status
+BEGIN
+    -- Step 1: Build SQL query dynamically
+    v_query := 'SELECT empno, ename FROM emp WHERE deptno = :deptno';
+
+    -- Step 2: Open a cursor
+    v_cursor_id := DBMS_SQL.OPEN_CURSOR;
+
+    -- Step 3: Parse the SQL statement
+    DBMS_SQL.PARSE(v_cursor_id, v_query, DBMS_SQL.NATIVE);
+
+    -- Step 4: Bind the variable
+    DBMS_SQL.BIND_VARIABLE(v_cursor_id, ':deptno', 10);
+
+    -- Step 5: Define columns to fetch
+    DBMS_SQL.DEFINE_COLUMN(v_cursor_id, 1, v_empno);
+    DBMS_SQL.DEFINE_COLUMN(v_cursor_id, 2, v_ename, 50);
+
+    -- Step 6: Execute the statement
+    v_status := DBMS_SQL.EXECUTE(v_cursor_id);
+
+    -- Step 7: Fetch and display rows
+    LOOP
+        EXIT WHEN DBMS_SQL.FETCH_ROWS(v_cursor_id) = 0;
+        DBMS_SQL.COLUMN_VALUE(v_cursor_id, 1, v_empno);
+        DBMS_SQL.COLUMN_VALUE(v_cursor_id, 2, v_ename);
+        DBMS_OUTPUT.PUT_LINE('Emp No: ' || v_empno || ' | Name: ' || v_ename);
+    END LOOP;
+
+    -- Step 8: Close cursor
+    DBMS_SQL.CLOSE_CURSOR(v_cursor_id);
+
+
+END;
+/

@@ -1,0 +1,53 @@
+===================[CREATE PACKAGE]==============================
+CREATE OR REPLACE PACKAGE pan_pkg IS
+    PROCEDURE show_pan(p_pan_no VARCHAR2);
+END pan_pkg;
+/
+
+-----------------------------------------------------------------------
+CREATE OR REPLACE PACKAGE BODY pan_pkg IS
+    PROCEDURE show_pan(p_pan_no VARCHAR2) IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('PAN Number: ' || p_pan_no);
+    END;
+END pan_pkg;
+/
+
+======================[CHECK THE PACKAGE IS CREATED]================================
+
+
+SELECT object_name, object_type, status
+FROM user_objects
+WHERE object_name = 'PAN_PKG';
+
+
+==============================[recompile package]======================================================
+
+BEGIN
+    DBMS_DDL.ALTER_COMPILE('PACKAGE BODY', 'MCA10', 'PAN_PKG');
+END;
+/
+
+=========================================================================================================================
+=====================[create PROCEDURE]=======================================
+CREATE OR REPLACE PROCEDURE pan_proc AS
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('PAN verification procedure executed successfully!');
+END;
+/
+
+------------------[EXECUTE PROCEDURE]--------------------
+SET SERVEROUTPUT ON;
+EXEC pan_proc;
+
+---------------------------------------
+SELECT object_name, object_type, status
+FROM user_objects
+WHERE object_name = 'PAN_PROC';
+
+---------------------------[RECOMPILE PROCEDURE]-------------------
+BEGIN
+    DBMS_DDL.ALTER_COMPILE('PROCEDURE', 'MCA10', 'PAN_PROC');
+END;
+/
+

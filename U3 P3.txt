@@ -1,0 +1,81 @@
+Write a query to identify latch contention in the database and format output for better understanding.
+
+================================================================================================================
+
+SELECT
+    name,
+    gets,
+    misses,
+    sleeps,
+    ROUND(((gets - misses) / NULLIF(gets, 0)) * 100, 2) AS hit_ratio_percent
+FROM
+    v$latch
+WHERE 
+    name IN ('redo allocation', 'cache buffers lru chain', 'redo copy', 'library cache load lock')
+
+
+
+================================================================================================================
+
+---------------------------LRU CHAIN------------------------------------
+SELECT
+    name,
+    gets,
+    misses,
+    sleeps,
+    ROUND(((gets - misses) / NULLIF(gets, 0)) * 100, 2) AS hit_ratio_percent
+FROM
+    v$latch
+WHERE
+    name LIKE '%lru%';
+----------------------------LIBRARY CACHE------------------------------
+SELECT
+    name,
+    gets,
+    misses,
+    sleeps,
+    ROUND(((gets - misses) / NULLIF(gets, 0)) * 100, 2) AS hit_ratio_percent
+FROM
+    v$latch
+WHERE
+    name LIKE 'library cache%';
+
+----------------------------REDO---------------------------------------
+SELECT
+    name,
+    gets,
+    misses,
+    sleeps,
+    ROUND(((gets - misses) / NULLIF(gets, 0)) * 100, 2) AS hit_ratio_percent
+FROM
+    v$latch
+WHERE
+    name LIKE '%redo%'
+ORDER BY
+    hit_ratio_percent DESC;
+------------------------------------------------------------------------
+   -- ROUND((1 - (misses / NULLIF(gets, 0))) * 100, 2) AS hit_ratio_percent
+--------------------------------------------------------------------------
+
+=================================================================================
+select name,gets,misses,sleeps,spin_gets from v$latch where name like '%chain%';
+
+=======================================================================
+select name,gets,misses,sleeps,spin_gets from v$latch where name like 'library%';
+
+========================================================================
+select name,gets,misses,sleeps,spin_gets from v$latch where name like 'redo%';
+
+========================================================================
+-------------------------------------------------------------------------------------
+select namespace,gets,gethits,pins from v$librarycache;
+-------------------------------------------------------------------------------------
+SELECT
+    name,
+    gets,
+    misses,
+    sleeps
+FROM
+    v$latch
+ORDER BY
+    misses DESC;
