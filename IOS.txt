@@ -1,0 +1,246 @@
+var strVariable : String? = "ABC"
+
+if let variable = strVariable {
+    print(variable)
+}
+
+
+var value1 : Any = "10"
+if let value2 = value1 as? Int {
+    print(value2)
+}
+
+
+if value1 is Int{
+    print("Yes \(value1)")
+}else{
+    print("No")
+}
+
+
+// Set
+
+var setData : Set<Int> = [1,2,3]
+var setData2 : Set<Int> = [3,4,5]
+var setData3 : Set<Int> = [1,2]
+
+print(setData.union(setData2))
+print(setData.intersection(setData2))
+print(setData.subtracting(setData2))
+print(setData.symmetricDifference(setData2))
+
+// issubset 
+print(setData.isSubset(of: setData2))
+print(setData3.isSubset(of: setData))
+print(setData.isSubset(of: setData3))
+
+// isSubset 
+print(setData.isSuperset(of: setData2))
+print(setData3.isSuperset(of: setData))
+print(setData.isSuperset(of: setData3))
+
+
+// isDisjoint means No commen element
+print(setData3.isDisjoint(with: setData2))
+
+setData.insert(4)
+setData.remove(2)
+print(setData)
+
+
+
+
+
+// Dictionary
+
+var marks : [String:Int] = [
+    "Math" : 90,
+    "science" : 89,
+    "S. Science" : 85
+]
+
+
+
+marks["Guj"] = 90
+print(marks)
+marks["Math"] = 80
+print(marks)
+
+
+for(subject , marks) in marks{
+    print("\(subject) -- \(marks)")
+}
+
+// It returns Keys
+var keys = marks.keys
+
+// It return values
+var values = marks.values
+
+print(keys)
+print(values)
+
+ var likeJson : [[String: Any]] = [
+     [
+         "Id" : 1,
+         "Name" : "Jay",
+         "Marks" : [80,90,50,45]
+     ],
+     [
+         "Id" : 2,
+         "Name" : "Purvil"
+     ],
+     
+ ]
+
+
+print(likeJson)
+
+for i in likeJson{
+     for (key,value) in i{
+        print("\(key) -- \(value)")
+    }
+}
+
+// Add new in Json
+likeJson.append(["Id" : 3,"Name" : "Raj"])
+print(likeJson)
+
+
+likeJson.remove(at: 0)
+print(likeJson)
+
+likeJson[0].removeValue(forKey: "Name")
+print(likeJson)
+
+likeJson = []
+print(likeJson)
+
+
+
+
+// Higher Order function
+
+var valueList : Array<Int> = [1,2,3,4,5]
+print(valueList)
+
+
+var valueList1 = valueList.map { $0 * 2 }
+print(valueList1)
+
+var valueList3 = valueList1.map{ number in number * 2}
+print(valueList3)
+
+
+var stringList : Array<String> = ["a","b","c","d"]
+
+var stringList1 = stringList.map{$0.uppercased()}
+
+print(stringList1)
+
+
+var doubled: [Int] = []
+
+var data = doubled.map { $0 * 2 }
+print(data)
+
+// for n in numbers {
+//     doubled.append(n * 2)
+// }
+
+
+
+
+//  Filter
+
+
+var filterCollection1 = [10,20,30,40,50,60]
+
+var filterCollection2 = filterCollection1.filter{ $0 > 20 && $0 < 50}
+print(filterCollection2)
+
+var filterCollection3 = filterCollection1.filter { number in 
+                                                     number > 20 && number < 50
+                                                 }
+
+print(filterCollection3)
+
+
+// Dictionary filter
+
+var filterDictionary1 : [String : Int] = [
+    "Math" : 90,
+    "Guj" : 80,
+    "Eng" : 65,
+    "Sci" : 40,
+    "SS" : 55
+]
+
+var filterDictionary2 = filterDictionary1.filter{ sub in
+                                                sub.value > 60 && sub.key != "Math"
+                                                }
+
+print(filterDictionary2)
+
+
+
+// Reduce
+
+var reduceCollection1 = [10,20,30,40,50,60,70]
+
+var sumOfReduceCollection1 = reduceCollection1.reduce(0) { $0 + $1}
+print(sumOfReduceCollection1)
+
+var multiOfReduceCollection1 = reduceCollection1.reduce(1) { $0 * $1}
+print(multiOfReduceCollection1)
+
+var findMaxNumber = reduceCollection1.reduce(0) { startNumber , number in
+                                                    startNumber > number ? startNumber : number
+                                                }
+print(findMaxNumber)
+
+var findNegativeNo = reduceCollection1.reduce(false) {  startNumber , number in
+                                                        startNumber == true || number < 0 ? true : false
+                                                     }
+print(findNegativeNo)
+
+
+var reduceCollection2 = ["A","B","C","D"]
+
+var stringCombine = reduceCollection2.reduce("") {$0 + " " + $1 }
+print(stringCombine)
+
+
+// Build Directory form Name 
+var nameDirectory = ["Jay","Rahul","Akshit"]
+var createDirectory = nameDirectory.reduce(into: [:]) {dict , value in 
+                                                    dict[value] = value.count
+                                                }
+
+print(createDirectory)
+
+
+// Sorting
+// Sorting
+
+var unsortNumber = [5,4,32,6,9,8,1,2,3]
+
+var sortedNumber1 = unsortNumber.sorted(by : >)
+print(sortedNumber1)
+
+print(unsortNumber)
+unsortNumber.sort()
+print(unsortNumber)
+unsortNumber.sort(by : >)
+print(unsortNumber)
+
+var unsortedString = ["AB","Zb","ab","z","PB","N","Ab"]
+
+var sortedString = unsortedString.sorted()
+print(sortedString)
+
+print(unsortedString)
+unsortedString.sort(by : >)
+print(unsortedString)
+unsortedString.sort(by : <)
+print(unsortedString)
